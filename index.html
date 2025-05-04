@@ -1,1 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile-Friendly Spin Wheel</title>
+    <style>
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4BC0C0;
+            --text-color: #333;
+            --light-bg: #f5f7fa;
+        }
+        
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--light-bg) 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        h1 {
+            color: var(--text-color);
+            text-align: center;
+            margin: 10px 0 20px;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            gap: 20px;
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            aspect-ratio: 1/1;
+            margin: 0 auto;
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 8px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            touch-action: none;
+        }
+        
+        .wheel-center {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #333;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        
+        .wheel-pointer {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--primary-color);
+            z-index: 5;
+            filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+        }
+        
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding-left: 30px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-size: clamp(10px, 3vw, 14px);
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .options {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .option-item:hover {
+            background: #f1f1f1;
+        }
+        
+        .option-item input[type="text"] {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-size: 14px;
+            min-width: 0;
+        }
+        
+        .option-item input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+            accent-color: var(--secondary-color);
+        }
+        
+        button {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff8e8e 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            opacity: 0.7;
+            transform: none !important;
+        }
+        
+        .result {
+            font-size: clamp(18px, 5vw, 24px);
+            font-weight: bold;
+            color: var(--text-color);
+            text-align: center;
+            margin-top: 10px;
+            min-height: 36px;
+            padding: 10px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .add-remove {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            gap: 10px;
+        }
+        
+        .add-remove button {
+            padding: 8px 12px;
+            font-size: 14px;
+            flex: 1;
+        }
+        
+        .cheat-mode-note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: center;
+            }
+            
+            .wheel-container {
+                max-width: 350px;
+            }
+            
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Mobile Spin Wheel</h1>
+    
+    <div class="container">
+        <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <div class="wheel" id="wheel"></div>
+            <div class="wheel-center"></div>
+        </div>
+        
+        <div class="controls">
+            <div class="options" id="options">
+                <h3>Wheel Options</h3>
+                <div id="option-container">
+                    <!-- Options will be added here -->
+                </div>
+                <div class="add-remove">
+                    <button id="add-option">Add Option</button>
+                    <button id="remove-option">Remove Option</button>
+                </div>
+            </div>
+            
+            <button id="spin-btn">SPIN THE WHEEL!</button>
+            <div class="result" id="result"></div>
+            <div class="cheat-mode-note">Pro tip: Check boxes to increase win chance</div>
+        </div>
+    </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const wheel = document.getElementById('wheel');
+            const optionContainer = document.getElementById('option-container');
+            const addOptionBtn = document.getElementById('add-option');
+            const removeOptionBtn = document.getElementById('remove-option');
+            const spinBtn = document.getElementById('spin-btn');
+            const resultDisplay = document.getElementById('result');
+            
+            let options = [];
+            let colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#8AC24A', '#607D8B',
+                '#E91E63', '#3F51B5', '#009688', '#795548'
+            ];
+            let isSpinning = false;
+            
+            // Initialize with 4 options for mobile
+            for (let i = 0; i < 4; i++) {
+                addOption();
+            }
+            
+            // Add option
+            addOptionBtn.addEventListener('click', addOption);
+            
+            // Remove option
+            removeOptionBtn.addEventListener('click', function() {
+                if (options.length > 2) {
+                    optionContainer.removeChild(optionContainer.lastChild);
+                    options.pop();
+                    updateWheel();
+                } else {
+                    alert('You need at least 2 options!');
+                }
+            });
+            
+            // Spin the wheel - works with both click and touch
+            spinBtn.addEventListener('click', spinWheel);
+            wheel.addEventListener('touchstart', function(e) {
+                if (!isSpinning) {
+                    e.preventDefault();
+                    spinWheel();
+                }
+            });
+            
+            function addOption() {
+                if (options.length >= 12) {
+                    alert('Maximum 12 options allowed!');
+                    return;
+                }
+                
+                const index = options.length;
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option-item';
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Option ' + (index + 1);
+                input.value = 'Option ' + (index + 1);
+                input.addEventListener('input', function() {
+                    options[index].text = this.value;
+                    updateWheel();
+                });
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.title = 'Check to increase win chance';
+                checkbox.addEventListener('change', function() {
+                    options[index].cheat = this.checked;
+                });
+                
+                optionDiv.appendChild(input);
+                optionDiv.appendChild(checkbox);
+                optionContainer.appendChild(optionDiv);
+                
+                options.push({
+                    text: input.value,
+                    cheat: false,
+                    element: null
+                });
+                
+                updateWheel();
+            }
+            
+            function updateWheel() {
+                wheel.innerHTML = '';
+                
+                const sectionAngle = 360 / options.length;
+                
+                options.forEach((option, index) => {
+                    const section = document.createElement('div');
+                    section.className = 'wheel-section';
+                    section.textContent = option.text;
+                    section.style.transform = `rotate(${sectionAngle * index}deg)`;
+                    section.style.backgroundColor = colors[index % colors.length];
+                    section.style.borderTopRightRadius = index === options.length - 1 ? '50%' : '0';
+                    wheel.appendChild(section);
+                    
+                    // Adjust text angle for readability
+                    const textAngle = sectionAngle * index + sectionAngle / 2;
+                    if (textAngle > 90 && textAngle < 270) {
+                        section.style.transform += ' rotate(180deg)';
+                        section.style.justifyContent = 'flex-end';
+                        section.style.paddingLeft = '0';
+                        section.style.paddingRight = '30px';
+                    }
+                    
+                    option.element = section;
+                });
+            }
+            
+            function spinWheel() {
+                if (isSpinning) return;
+                if (options.length < 2) {
+                    alert('You need at least 2 options!');
+                    return;
+                }
+                
+                isSpinning = true;
+                spinBtn.disabled = true;
+                resultDisplay.textContent = '';
+                
+                // Calculate weights for each option (cheated options have higher weight)
+                const weights = options.map(opt => opt.cheat ? 5 : 1);
+                const totalWeight = weights.reduce((a, b) => a + b, 0);
+                
+                // Generate random number weighted by cheat checkboxes
+                let random = Math.random() * totalWeight;
+                let selectedIndex = 0;
+                let weightSum = 0;
+                
+                for (let i = 0; i < weights.length; i++) {
+                    weightSum += weights[i];
+                    if (random <= weightSum) {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+                
+                // Calculate rotation (multiple full rotations plus the selected segment)
+                const sectionAngle = 360 / options.length;
+                const fullRotations = 5;
+                const finalRotation = 360 * fullRotations + 360 - (sectionAngle * selectedIndex + sectionAngle / 2);
+                
+                wheel.style.transform = `rotate(${finalRotation}deg)`;
+                
+                // Display result after spinning
+                setTimeout(() => {
+                    resultDisplay.textContent = `Winner: ${options[selectedIndex].text}`;
+                    resultDisplay.style.color = colors[selectedIndex % colors.length];
+                    spinBtn.disabled = false;
+                    isSpinning = false;
+                }, 4000);
+            }
+            
+            // Initial wheel update
+            updateWheel();
+        });
+    </script>
+</body>
+</html>
